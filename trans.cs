@@ -1,36 +1,42 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 namespace App
 {
     class Program
     {
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+        static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, int bAlpha, uint dwFlags);
         [DllImport("user32.dll", SetLastError = true)]
         static extern int SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
         [DllImport("user32.dll", SetLastError = true)]
         static extern int GetWindowLong(IntPtr hWnd, int nIndex);
         static void Main(string[] args)
         {
-            byte trans = 192;
+            int trans = 192;
             if(args.Length > 0){
-                int[] ints = Array.ConvertAll(args, arg => Convert.ToInt32(arg));
-                if(ints[0]>=0 && ints[0]<=255){
-                    byte[] bytes = BitConverter.GetBytes(ints[0]);
-                    trans = bytes[0];
-                }else{
-                    Console.WriteLine("透明度的设置区间在0~255之间");
+                trans = Convert.ToInt32(args[0]);
+                if(trans < 0 || trans > 255){
+                    Console.WriteLine("Transparency setting between 0-255");
+                    return;
                 }
             }
             Program program = new Program();
-            System.Diagnostics.Process[] ps = System.Diagnostics.Process.GetProcessesByName("gvim");
-            // System.Console.WriteLine(ps.Length);
-            if(ps.Length < 1) return;
-            foreach(System.Diagnostics.Process p in ps){
-                program.MakeWindowTransparent(p.MainWindowHandle, trans);
+            Process[] ps = Process.GetProcessesByName("gvim");
+            if(ps.Length < 1){
+                Console.WriteLine("Not find the process with gvim");
+                return;
+            } 
+            bool isTrans = false;
+            foreach(Process p in ps){
+                isTrans = program.MakeWindowTransparent(p.MainWindowHandle, trans);
+                if(isTrans){
+                    Console.WriteLine("Transparency changed to " + trans +" successfully");
+                    break;
+                }
             }
         }
-        bool MakeWindowTransparent(IntPtr hWnd, byte factor)
+        bool MakeWindowTransparent(IntPtr hWnd, int factor)
         {
             const int GWL_EXSTYLE = (-20);
             const uint WS_EX_LAYERED = 0x00080000;
