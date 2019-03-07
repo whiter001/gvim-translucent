@@ -35,6 +35,7 @@ namespace App
                     break;
                 }
             }
+            Console.WriteLine("Transparency changed to " + trans +" failed");
         }
         bool MakeWindowTransparent(IntPtr hWnd, int factor)
         {
